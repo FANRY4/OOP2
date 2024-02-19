@@ -1,0 +1,188 @@
+import os
+
+class Domeniu:
+    PROGRAMARE = 0
+    MATEMATICA = 1
+    TIC = 2
+    INGINERIE = 3
+
+class Student:
+    def __init__(self):
+        self.IdentificatorUnic = ""
+        self.Nume = ""
+        self.Domeniu = Domeniu.PROGRAMARE
+        self.EsteAbsolvent = False
+
+class Facultate:
+    def __init__(self):
+        self.Nume = ""
+        self.Domeniu = Domeniu.PROGRAMARE
+        self.Studenti = []
+
+class SistemManagementStudenti:
+    def __init__(self):
+        self.facultati = []
+
+    def CreareSiAtribuireStudent(self, nume, identificatorUnic, domeniu, numeFacultate):
+        facultate = self.GetFacultateDupaNume(numeFacultate)
+        if facultate is not None:
+            student = Student()
+            student.Nume = nume
+            student.IdentificatorUnic = identificatorUnic
+            student.Domeniu = domeniu
+            facultate.Studenti.append(student)
+            print(f"{nume} a fost asignat la {numeFacultate}.")
+        else:
+            print(f"Facultatea {numeFacultate} nu a fost găsită.")
+
+    def AbsolvireStudent(self, identificatorUnic):
+        student = self.GetStudentDupaIdentificator(identificatorUnic)
+        if student is not None:
+            student.EsteAbsolvent = True
+            print(f"{student.Nume} a absolvit.")
+        else:
+            print(f"Studentul cu ID-ul {identificatorUnic} nu a fost găsit.")
+
+    def AfisareStudentiInscrisiCurent(self):
+        studentiInscrisi = [student for facultate in self.facultati for student in facultate.Studenti if not student.EsteAbsolvent]
+        self.AfisareStudenti(studentiInscrisi, "Studenti Inscrisi Curent")
+
+    def AfisareAbsolventi(self):
+        absolventi = [student for facultate in self.facultati for student in facultate.Studenti if student.EsteAbsolvent]
+        self.AfisareStudenti(absolventi, "Absolventi")
+
+    def VerificaDacaStudentulApartineFacultatii(self, identificatorUnic, numeFacultate):
+        facultate = self.GetFacultateDupaNume(numeFacultate)
+        if facultate:
+            return any(student.IdentificatorUnic == identificatorUnic for student in facultate.Studenti)
+        return False
+
+    def CreareFacultateNoua(self, nume, domeniu):
+        facultate = Facultate()
+        facultate.Nume = nume
+        facultate.Domeniu = domeniu
+        self.facultati.append(facultate)
+        print(f"Facultatea {nume} a fost creată.")
+
+    def GasesteFacultateDupaIdentificatorulStudentului(self, identificatorUnic):
+        for facultate in self.facultati:
+            for student in facultate.Studenti:
+                if student.IdentificatorUnic == identificatorUnic:
+                    return facultate.Nume
+        return "Facultatea nu a fost găsită"
+
+    def AfisareFacultatiUniversitare(self):
+        self.AfisareFacultati(self.facultati, "Facultati Universitare")
+
+    def AfisareFacultatiDupaDomeniu(self, domeniu):
+        facultatiFiltrate = [facultate for facultate in self.facultati if facultate.Domeniu == domeniu]
+        self.AfisareFacultati(facultatiFiltrate, f"{domeniu} Facultati")
+
+    def OperatieInscriereInGrupDinFisierText(self, caleFisier):
+        try:
+            with open(caleFisier, 'r') as file:
+                linii = file.readlines()
+                for linie in linii:
+                    date = linie.strip().split(',')
+                    if len(date) == 4:
+                        self.CreareSiAtribuireStudent(date[0], date[1], getattr(Domeniu, date[2]), date[3])
+                    else:
+                        print(f"Date nevalide în fișier: {linie}")
+        except Exception as ex:
+            print(f"Eroare la citirea fisierului: {ex}")
+
+    def OperatieAbsolvireDinFisierText(self, caleFisier):
+        try:
+            with open(caleFisier, 'r') as file:
+                linii = file.readlines()
+                for linie in linii:
+                    date = linie.strip().split(',')
+                    if len(date) == 1:
+                        self.AbsolvireStudent(date[0])
+                    else:
+                        print(f"Date nevalide în fișier: {linie}")
+        except Exception as ex:
+            print(f"Eroare la citirea fisierului: {ex}")
+
+    def GetStudentDupaIdentificator(self, identificatorUnic):
+        for facultate in self.facultati:
+            for student in facultate.Studenti:
+                if student.IdentificatorUnic == identificatorUnic:
+                    return student
+        return None
+
+    def GetFacultateDupaNume(self, numeFacultate):
+        for facultate in self.facultati:
+            if facultate.Nume == numeFacultate:
+                return facultate
+        return None
+
+    def AfisareStudenti(self, studenti, titlu):
+        print(f"{titlu}:")
+        for student in studenti:
+            print(f"- {student.Nume} ({student.IdentificatorUnic}) - {student.Domeniu}")
+
+    def AfisareFacultati(self, facultati, titlu):
+        print(f"{titlu}:")
+        for facultate in facultati:
+            print(f"- {facultate.Nume} - {facultate.Domeniu}")
+
+if __name__ == "__main__":
+    sistemManagementStudenti = SistemManagementStudenti()
+    while True:
+        print("\nAlegeți o operație:")
+        print("1. Creare și atribuire student la o facultate")
+        print("2. Absolvire student de la o facultate")
+        print("3. Afișare studenți înscriși curent")
+        print("4. Afișare absolvenți")
+        print("5. Verificare dacă un student aparține unei facultăți")
+        print("6. Creare facultate nouă")
+        print("7. Cautare facultate după identificatorul studentului")
+        print("8. Afișare facultăți universitare")
+        print("9. Afișare facultăți după domeniu")
+        print("10. Operație de înrolare în grup din fișier text")
+        print("11. Operație de absolvire din fișier text")
+        print("0. Ieșire")
+        optiune = input()
+
+        if optiune == "1":
+            nume = input("Introduceți numele studentului: ")
+            identificatorUnic = input("Introduceți identificatorul unic al studentului: ")
+            domeniu = int(input("Introduceți domeniul studentului (0 - PROGRAMARE, 1 - MATEMATICA, 2 - TIC, 3 - INGINERIE): "))
+            numeFacultate = input("Introduceți numele facultății: ")
+            sistemManagementStudenti.CreareSiAtribuireStudent(nume, identificatorUnic, domeniu, numeFacultate)
+        elif optiune == "2":
+            identificatorUnic = input("Introduceți identificatorul unic al studentului de absolvit: ")
+            sistemManagementStudenti.AbsolvireStudent(identificatorUnic)
+        elif optiune == "3":
+            sistemManagementStudenti.AfisareStudentiInscrisiCurent()
+        elif optiune == "4":
+            sistemManagementStudenti.AfisareAbsolventi()
+        elif optiune == "5":
+            identificatorUnic = input("Introduceți identificatorul unic al studentului: ")
+            numeFacultateVerificare = input("Introduceți numele facultății: ")
+            apartineFacultatii = sistemManagementStudenti.VerificaDacaStudentulApartineFacultatii(identificatorUnic, numeFacultateVerificare)
+            print(f"Studentul aparține facultății: {apartineFacultatii}")
+        elif optiune == "6":
+            numeNouFacultate = input("Introduceți numele noii facultăți: ")
+            domeniuNouFacultate = int(input("Introduceți domeniul noii facultăți (0 - PROGRAMARE, 1 - MATEMATICA, 2 - TIC, 3 - INGINERIE): "))
+            sistemManagementStudenti.CreareFacultateNoua(numeNouFacultate, domeniuNouFacultate)
+        elif optiune == "7":
+            idStudentCautareFacultate = input("Introduceți identificatorul unic al studentului: ")
+            facultateStudent = sistemManagementStudenti.GasesteFacultateDupaIdentificatorulStudentului(idStudentCautareFacultate)
+            print(f"Facultatea în care studentul este înscris: {facultateStudent}")
+        elif optiune == "8":
+            sistemManagementStudenti.AfisareFacultatiUniversitare()
+        elif optiune == "9":
+            domeniuAfisareFacultati = int(input("Introduceți domeniul facultăților de afișat (0 - PROGRAMARE, 1 - MATEMATICA, 2 - TIC, 3 - INGINERIE): "))
+            sistemManagementStudenti.AfisareFacultatiDupaDomeniu(domeniuAfisareFacultati)
+        elif optiune == "10":
+            caleFisierInrolare = input("Introduceți calea fișierului text pentru operația de înrolare în grup: ")
+            sistemManagementStudenti.OperatieInscriereInGrupDinFisierText(caleFisierInrolare)
+        elif optiune == "11":
+            caleFisierAbsolvire = input("Introduceți calea fișierului text pentru operația de absolvire: ")
+            sistemManagementStudenti.OperatieAbsolvireDinFisierText(caleFisierAbsolvire)
+        elif optiune == "0":
+            break
+        else:
+            print("Opțiune invalidă. Reîncercați.")
